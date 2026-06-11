@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rocket Science</title>
+  <style>
+    * {
+      padding: 0;
+      margin: 0;
+    }
+    body {
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+      justify-content: center;
+      align-items: center;
+      width: 100dvw;
+      height: 100dvh;
+      background-color: #546696;
+    }
+    h1 {
+      color: white;
+    }
+    canvas {
+      background: black;
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <!-- <h1>Artemis 2 Trajectory</h1> -->
+  <canvas id="space" width="1100" height="750"></canvas>
+  <script src="./main.js" type="module"></script>
+  <script src="./globals.js" type="module"></script>
+</body>
+</html>

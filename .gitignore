@@ -1,0 +1,6 @@
+/.vscode
+/instructions
+*.csv
+out.js
+*.exe
+todo.txt
