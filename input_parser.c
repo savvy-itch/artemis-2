@@ -10,9 +10,9 @@ Rx, Ry, Vx, Vy
 #include <string.h>
 
 #define BASE_SIZE 100
-#define ROW_LIMIT 20
+#define ROW_LIMIT 9000
 #define OUT_FILE_NAME "out.js"
-#define OUT_PREFIX "export const input_data = [\n"
+#define OUT_PREFIX "export const INPUT_DATA = [\n"
 #define OUT_SUFFIX "\n];"
 
 void parse_to_js_arr(FILE *fp_out, char *buf, const int buf_size);
@@ -53,24 +53,25 @@ int main (int argc, char *argv[])
   }
 
   /*
-  remove unused columns. Only leave rx, ry, vx, vy
+  remove unused columns. Only leave time, rx, ry, vx, vy
       0     1    2    3   4    5    6     7      8          9         10          11      12      13            14        15
   --------------------------------------------------------------------------------------------------------------------------------
   | TIME | Rx | Ry | Rz | Vx | Vy | Vz | MASS | WPSA | Budget WPSA | DS54 | Budget DS54 | DS24 | Budget DS24 | DS34 | Budget DS34 |
   --------------------------------------------------------------------------------------------------------------------------------
-            ^   ^         ^     ^
+      ^     ^   ^         ^     ^
   */
 
-  int i = 0, col_num = 0, row = 0;
-  // while ((ch = getc(fp)) != EOF) {
-  while ((ch = getc(fp)) != EOF && row < ROW_LIMIT) {
+  int i = 0, col_num = 0;
+  // int row = 0;
+  while ((ch = getc(fp)) != EOF) {
+  // while ((ch = getc(fp)) != EOF && row < ROW_LIMIT) {
     if (ch == '\n') {
-      row++;
+      // row++;
       col_num = 0;
     }
 
-    // only need cols 1,2,4,5
-    if (col_num != 0 && col_num != 3 && col_num < 6) {
+    // only need cols 0-2,4,5
+    if (col_num < 6 && col_num != 3) {
       // allocate more memory
       if (i >= buf_size) {
         buf_size += BASE_SIZE;
@@ -89,13 +90,14 @@ int main (int argc, char *argv[])
       i++;
     }
     
-    if (ch == ';' && col_num <= 5) {
+    // only look until column 5
+    if (ch == ';' && col_num < 6) {
       col_num++;
     }
   }
 
   fclose(fp);
-
+  i--;
   parse_to_js_arr(fp_out, buf, i);
 
   free(buf);
@@ -106,20 +108,31 @@ int main (int argc, char *argv[])
 
 void parse_to_js_arr(FILE *fp_out, char *buf, const int buf_size)
 {
-  enum props { RX_KEY, RX_VAL, RY_KEY, RY_VAL, VX_KEY, VX_VAL, VY_KEY, VY_VAL };
-  enum props cur_prop = RX_KEY;
-
-  fprintf(fp_out, "/*\n");
-  fwrite(buf, sizeof(buf[0]), buf_size, fp_out);
-  fprintf(fp_out, "\n*/\n\n");
+  enum props { TIME_KEY, TIME_VAL, RX_KEY, RX_VAL, RY_KEY, RY_VAL, VX_KEY, VX_VAL, VY_KEY, VY_VAL };
+  enum props cur_prop = TIME_KEY;
 
   fwrite(OUT_PREFIX, sizeof(OUT_PREFIX[0]), strlen(OUT_PREFIX), fp_out);
   
   int i = 0;
   while (i < buf_size) {
     switch (cur_prop) {
+      case TIME_KEY:
+        fprintf(fp_out, "{ time: ");
+        cur_prop = TIME_VAL;
+        break;
+      case TIME_VAL:
+        if (buf[i] == ';') {
+          fprintf(fp_out, ", ");
+          cur_prop = RX_KEY;
+        } 
+        // some lines might start with \n char
+        else if (buf[i] != '\n') {
+          putc(buf[i], fp_out);
+        }
+        i++;
+        break;
       case RX_KEY:
-        fprintf(fp_out, "{ rx: ");
+        fprintf(fp_out, "rx: ");
         cur_prop = RX_VAL;
         break;
       case RX_VAL:
@@ -164,7 +177,7 @@ void parse_to_js_arr(FILE *fp_out, char *buf, const int buf_size)
       case VY_VAL:
         if (buf[i] == ';') {
           fprintf(fp_out, ", },\n");
-          cur_prop = RX_KEY;
+          cur_prop = TIME_KEY;
         } else {
           putc(buf[i], fp_out);
         }

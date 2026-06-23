@@ -1,19 +1,19 @@
 import { testData } from "./globals.js";
+import { input_data } from "./out.js";
 
 const canvas = document.getElementById("space");
 const ctx = canvas.getContext("2d");
 const earthPosX = canvas.width / 2;
 const earthPosY = canvas.height / 2 + 250;
+const distanceScale = 100;
 const earthMoonDistance = earthPosY - 550;
-const earthRadius = 63.78137;
-const moonRadius = 17.374;
+const earthRadius = 6378.137 / distanceScale;
+const moonRadius = 1737.4 / distanceScale;
 const trajectoryRadius = earthRadius + 15;
 const moonTrajectoryRadius = moonRadius + 15;
 const k = 0.5522;
-const velocity = 5;
 const segDist = [];
 const scaledData = [];
-const distanceScale = 100;
 
 const trajectory = [
   // around Earth
@@ -28,11 +28,6 @@ const trajectory = [
   // back to Earth
   { x: earthPosX, y: earthPosY },
 ];
-
-// moon-earth distance = 384,400 km
-// Earth Radius = 6378.137 km
-// Moon Radius = 1737.4 km
-// 3689,773564	4222,72217	3028,891599 Rx(km)[J2000-EARTH]
 
 const dummyData = [
   // around Earth
@@ -137,7 +132,7 @@ function drawTrajectory(lastSegIdx, newX, newY) {
   // ctx.moveTo(trajectory[0].x, trajectory[0].y);
   ctx.moveTo(scaledData[0].rx, scaledData[0].ry);
   ctx.strokeStyle = "yellow";
-  ctx.lineWidth = 5;
+  ctx.lineWidth = 4;
 
 
   for (let i = 0; i <= lastSegIdx; i++) {
@@ -196,10 +191,10 @@ function getNewCoordinates(passedDistance) {
   // interpolate the coordinates
   const newX = (1 - t) * p1.rx + t * p2.rx;
   const newY = (1 - t) * p1.ry + t * p2.ry;
-  // const totalVel = Math.sqrt(Math.pow(dummyData[lastSegIdx].vx, 2) * Math.pow(dummyData[lastSegIdx].vx, 2));
-  const totalVel = Math.sqrt(Math.pow(scaledData[lastSegIdx].vx / distanceScale, 2) * Math.pow(scaledData[lastSegIdx].vy / distanceScale, 2));
+  // const totalVel = Math.sqrt(Math.pow(scaledData[lastSegIdx].vx / distanceScale, 2) * Math.pow(scaledData[lastSegIdx].vy / distanceScale, 2));
+  const dummyVel = 10;
 
-  return { newX, newY, totalVel };
+  return { newX, newY, totalVel: dummyVel };
 }
 
 function drawSpacecraft(newX, newY, totalVel) {
@@ -260,6 +255,6 @@ function getAllSegmentsDistances(data) {
   // }
 }
 
-scaleCoordinates(distanceScale, testData, earthPosX, earthPosY);
+scaleCoordinates(distanceScale, input_data, earthPosX, earthPosY);
 getAllSegmentsDistances(scaledData);
 draw(earthRadius, earthPosX, earthPosY, moonRadius, earthMoonDistance);
