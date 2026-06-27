@@ -21,16 +21,29 @@
     }
     h1 {
       color: white;
+      font-family: sans-serif;
     }
-    canvas {
+    .wrapper {
+      position: relative;
+    }
+    .space {
       background: black;
       display: block;
+    }
+    .top {
+      display: block;
+      position: absolute;
+      top: 0;
+      /* border: 1px solid red; */
     }
   </style>
 </head>
 <body>
-  <!-- <h1>Artemis 2 Trajectory</h1> -->
-  <canvas id="space" width="1300" height="700"></canvas>
+  <h1>Artemis II Flight Trajectory</h1>
+  <div class="wrapper">
+    <canvas id="space" class="space" width="1400" height="720"></canvas>
+    <canvas id="top" class="top" width="1400" height="720"></canvas>
+  </div>
   <script src="./main_time.js" type="module"></script>
 </body>
 </html>
