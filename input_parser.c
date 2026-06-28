@@ -1,8 +1,8 @@
 /*
-Parses input data from a CSV file into a JavaScript array object. 
+Parses input data from a CSV file into a JavaScript array of objects. 
 The floats in CSV must have "." as decimal separators and ";" as column separators. 
 For this implementation the relevant fields are:
-Rx, Ry, Vx, Vy
+Time, Rx, Ry, Vx, Vy
 */
 #include <stdio.h>
 #include <stdlib.h>

@@ -6,7 +6,7 @@ const ctx = canvas.getContext("2d");
 const topCtx = topCanvas.getContext("2d");
 const earthPosX = 50;
 const earthPosY = canvas.height / 2 + 200;
-const distanceScale = 400;
+const distanceScale = 300;
 const playbackSpeed = 40000;
 const earthMoonDistance = 384400; // km
 const earthRadius = 6378.137; // km
@@ -29,8 +29,7 @@ const phases = [
   { timestamp: 7000, phase: "Lunar flyby" },
   { timestamp: 7656, phase: "Trans-Earth return" },
   { timestamp: 12774, phase: "Crew module separation" },
-  { timestamp: 12945, phase: "Entry interface" },
-  { timestamp: 12982, phase: "Splashdown" }
+  { timestamp: 12945, phase: "Entry & Splashdown" },
 ]; // timestamps from INPUT_DATA
 
 let totalMissionTime = 0; // min
@@ -46,15 +45,15 @@ function drawBody(radius, color, posX, posY) {
   ctx.closePath();
 }
 
-const startAngle = -3;
-let lastAngle = 0;
+// approximate angle to match spacecraft trajectory
+const startAngle = 41 * Math.PI / 180;
 
 function drawMoon(radius, color, totalMissionTime) {
   ctx.beginPath();
   ctx.strokeStyle = "red";
   ctx.lineWidth = 1;
   // theta = v*t/r
-  const endAngle = 2 * Math.PI - (moonAngularVelocity * totalMissionTime * 60); // rad
+  const endAngle = startAngle - (moonAngularVelocity * totalMissionTime * 60); // rad
   ctx.arc(earthPosX, earthPosY, earthMoonDistance / distanceScale, startAngle, endAngle, true);
   const newX = earthPosX + (earthMoonDistance / distanceScale) * Math.cos(endAngle);
   const newY = earthPosY + (earthMoonDistance / distanceScale) * Math.sin(endAngle);
@@ -135,7 +134,7 @@ function drawPhaseName(idx) {
   topCtx.clearRect(0, 0, canvas.width, 120);
   topCtx.fillStyle = "white";
   topCtx.font = "28px monospace";
-  topCtx.fillText(`${phases[idx].phase}`, canvas.width/2, 50);
+  topCtx.fillText(`${phases[idx].phase}`, canvas.width / 2, 50);
 }
 
 let lastIdx;
@@ -226,12 +225,12 @@ function draw(frameTime, earthRadius, earthPosX, earthPosY, moonRadius) {
     displayMetrics(scaledData[lastIdx].time, scaledData[lastIdx].vx, scaledData[lastIdx].vy);
   }
 
-  // if (totalMissionTime <= scaledData[scaledData.length - 1].time) {
-  if (lastIdx < scaledData.length - 1) {
-    console.log(lastIdx);
+  if (totalMissionTime <= scaledData[scaledData.length - 1].time) {
     requestAnimationFrame((t) => draw(t, earthRadius, earthPosX, earthPosY, moonRadius));
   } else {
-    console.log({lastTime: scaledData[lastIdx].time, lastTimeInArr: scaledData[scaledData.length - 1].time, totalMissionTime});
+    if (lastIdx < scaledData.length - 1) {
+      requestAnimationFrame((t) => drawFinalFrame(t, earthRadius, earthPosX, earthPosY, moonRadius));
+    }
   }
 }
 
@@ -244,6 +243,22 @@ function scaleCoordinates(distanceScale, data, earthPosX, earthPosY) {
       ry: earthPosY + (data[i].ry / distanceScale),
     };
   }
+}
+
+/*
+ * Manually renders the last timestamp of input data because of high playback speed of the animation, some timestamps may be skipped, resulting in an incomplete animation.
+*/
+function drawFinalFrame(frameTime, earthRadius, earthPosX, earthPosY, moonRadius) {
+  const realDelta = frameTime - lastFrameTime; // ms
+  totalMissionTime += (realDelta / 60000) * playbackSpeed; // min
+  lastFrameTime = frameTime;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  drawBody(earthRadius / distanceScale, "#0095DD", earthPosX, earthPosY);
+  drawMoon(moonRadius / distanceScale, "hsl(215, 7%, 54%)", totalMissionTime);
+  const lastIdx = scaledData.length - 1;
+  drawTrajectory(lastIdx, scaledData[lastIdx].rx, scaledData[lastIdx].ry);
+  drawSpacecraft(scaledData[lastIdx].rx, scaledData[lastIdx].ry);
+  displayMetrics(scaledData[lastIdx].time, scaledData[lastIdx].vx, scaledData[lastIdx].vy);
 }
 
 scaleCoordinates(distanceScale, INPUT_DATA, earthPosX, earthPosY);
